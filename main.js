@@ -71,6 +71,17 @@ var mockFileLibrary =
 	}
 };
 
+function cartesianProductOf() {
+    return _.reduce(arguments, function(a, b) {
+        return _.flatten(_.map(a, function(x) {
+            return _.map(b, function(y) {
+                return x.concat([y]);
+            });
+        }), true);
+    }, [ [] ]);
+};
+
+
 function generateTestCases()
 {
 
@@ -78,13 +89,16 @@ function generateTestCases()
 	for ( var funcName in functionConstraints )
 	{
 		var params = {};
+		console.log("Into the constraint processing loop with funcName:"+funcName)
 
 		// initialize params
 		for (var i =0; i < functionConstraints[funcName].params.length; i++ )
 		{
 			var paramName = functionConstraints[funcName].params[i];
 			//params[paramName] = '\'' + faker.phone.phoneNumber()+'\'';
-			params[paramName] = '\'\'';
+			console.log("paramName : "+paramName);
+			//params[paramName] = '\'\'';
+			params[paramName] = new Array();
 		}
 
 		//console.log( params );
@@ -99,14 +113,30 @@ function generateTestCases()
 		for( var c = 0; c < constraints.length; c++ )
 		{
 			var constraint = constraints[c];
+			console.log("Constraints : "+JSON.stringify(constraint))
 			if( params.hasOwnProperty( constraint.ident ) )
 			{
-				params[constraint.ident] = constraint.value;
+				params[constraint.ident].push(constraint.value);
+				//console.log(params);
+			}
+		}
+
+		var parametersList = Object.keys(params).map( function(k) {return params[k]; });
+		console.log(parametersList);
+		cartesianOutput = cartesianProductOf.apply(this, parametersList);
+		console.log(cartesianOutput);
+		for(var i=0;i<cartesianOutput.length;i++)
+		{
+			var args = cartesianOutput[i];
+			console.log("Args: "+args)
+			if(funcName=='inc' || funcName=='weird')
+			{
+				content += "subject.{0}({1});\n".format(funcName, args );
 			}
 		}
 
 		// Prepare function arguments.
-		var args = Object.keys(params).map( function(k) {return params[k]; }).join(",");
+		//var args = Object.keys(params).map( function(k) {return params[k]; }).join(",");
 		if( pathExists || fileWithContent )
 		{
 			content += generateMockFsTestCases(pathExists,fileWithContent,funcName, args);
@@ -115,7 +145,7 @@ function generateTestCases()
 			content += generateMockFsTestCases(pathExists,!fileWithContent,funcName, args);
 			content += generateMockFsTestCases(!pathExists,!fileWithContent,funcName, args);
 		}
-		else
+		else if(funcName!='inc' && funcName!='weird')
 		{
 			// Emit simple test case.
 			content += "subject.{0}({1});\n".format(funcName, args );
@@ -172,19 +202,93 @@ function constraints(filePath)
 			// Check for expressions using argument.
 			traverse(node, function(child)
 			{
-				if( child.type === 'BinaryExpression' && child.operator == "==")
+				if( child.type === 'BinaryExpression' && ( child.operator == "==" || child.operator == "<" || child.operator == "<" || child.operator == ">"))
 				{
 					if( child.left.type == 'Identifier' && params.indexOf( child.left.name ) > -1)
 					{
 						// get expression from original source code:
 						var expression = buf.substring(child.range[0], child.range[1]);
 						var rightHand = buf.substring(child.right.range[0], child.right.range[1])
+						console.log("expression:  "+expression+"   rightHand: "+rightHand);
+						if(typeof child.right.value == "string")
+						{
+							if(child.operator == "==" || child.operator == "<")
+							{
+								otherBranchValue = '"a'+child.right.value + '"';
+							}
+							else 
+							{
+								otherBranchValue = '"z'+child.right.value + '"';
+							}
+						}
+						else if(typeof child.right.value == "undefined")
+						{
+							otherBranchValue = 10;
+						}
+						else
+						{
+							if(child.operator == "==" || child.operator == "<")
+							{
+								otherBranchValue = rightHand - 10;
+							}
+							else 
+							{
+								otherBranchValue = rightHand + 10;
+							}
+						}
 
 						functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
 								ident: child.left.name,
 								value: rightHand,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: child.left.name,
+								value: otherBranchValue,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+					}
+
+					else if(child.left.type == "CallExpression" && child.left.callee.property && 
+							child.left.callee.property.name == "indexOf" && params.indexOf(child.left.callee.object.name) > -1)
+					{
+						console.log("Into callExpression BinaryExpression---------------------"+child.left.arguments[0].value);
+						// ==true coverage
+						var testString = "testString";
+						var leftFragment = testString.slice(0,child.right.value);
+						var insertFragment = child.left.arguments[0].value;
+						var rightFragment = testString.slice(child.right.value);
+						var trueSample = '"'+leftFragment+insertFragment+rightFragment+'"';
+						var falseSample = '"'+testString+'"';
+
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: child.left.callee.object.name,
+								value: trueSample,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
+						// ==false coverage						
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: child.left.callee.object.name,
+								value: falseSample,
 								funcName: funcName,
 								kind: "integer",
 								operator : child.operator,
