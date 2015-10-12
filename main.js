@@ -68,6 +68,27 @@ var mockFileLibrary =
 		{	
   			file1: 'text content',
 		}
+	},
+	fileWithoutContent:
+	{
+		pathContent:
+		{
+			file1: ''
+		}
+	},
+	directoryWithFiles:
+	{
+		pathExists : 
+		{
+			file1: 'text content2'
+		}
+	},
+	directoryWithEmptyFiles:
+	{
+		'path/fileExists':
+		{
+			file1: ''
+		}
 	}
 };
 
@@ -108,6 +129,9 @@ function generateTestCases()
 		// Handle global constraints...
 		var fileWithContent = _.some(constraints, {kind: 'fileWithContent' });
 		var pathExists      = _.some(constraints, {kind: 'fileExists' });
+		var directoryWithFiles      = _.some(constraints, {kind: 'directoryWithFiles' });
+		var directoryWithEmptyFiles      = _.some(constraints, {kind: 'directoryWithEmptyFiles' });
+		var fileWithoutContent      = _.some(constraints, {kind: 'fileWithoutContent' });
 
 		// plug-in values for parameters
 		for( var c = 0; c < constraints.length; c++ )
@@ -136,14 +160,20 @@ function generateTestCases()
 		}
 
 		// Prepare function arguments.
-		//var args = Object.keys(params).map( function(k) {return params[k]; }).join(",");
-		if( pathExists || fileWithContent )
+		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
-			content += generateMockFsTestCases(pathExists,fileWithContent,funcName, args);
+			var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			// Bonus...generate constraint variations test cases....
-			content += generateMockFsTestCases(!pathExists,fileWithContent,funcName, args);
-			content += generateMockFsTestCases(pathExists,!fileWithContent,funcName, args);
-			content += generateMockFsTestCases(!pathExists,!fileWithContent,funcName, args);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+
 		}
 		else if(funcName!='inc' && funcName!='weird')
 		{
@@ -158,20 +188,53 @@ function generateTestCases()
 
 }
 
-function generateMockFsTestCases (pathExists,fileWithContent,funcName,args) 
+function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName,args) 
 {
 	var testCase = "";
 	// Build mock file system based on constraints.
 	var mergedFS = {};
 	if( pathExists )
 	{
-		for (var attrname in mockFileLibrary.pathExists) { mergedFS[attrname] = mockFileLibrary.pathExists[attrname]; }
+		for (var attrname in mockFileLibrary.pathExists) 
+			{ 
+				mergedFS[attrname] = mockFileLibrary.pathExists[attrname];
+				console.log("//////////pathExists////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname]));
+			}
 	}
 	if( fileWithContent )
 	{
-		for (var attrname in mockFileLibrary.fileWithContent) { mergedFS[attrname] = mockFileLibrary.fileWithContent[attrname]; }
+		for (var attrname in mockFileLibrary.fileWithContent) 
+			{ 
+				mergedFS[attrname] = mockFileLibrary.fileWithContent[attrname];
+				console.log("///////fileWithContent///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+			}
+	}
+	if( directoryWithFiles )
+	{
+		for (var attrname in mockFileLibrary.directoryWithFiles) 
+			{ 
+				mergedFS[attrname] = mockFileLibrary.directoryWithFiles[attrname];
+				console.log("///////directoryWithFiles///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+			}
+	}
+	if( directoryWithEmptyFiles )
+	{
+		for (var attrname in mockFileLibrary.directoryWithEmptyFiles) 
+			{ 
+				mergedFS[attrname] = mockFileLibrary.directoryWithEmptyFiles[attrname];
+				console.log("///////directoryWithEmptyFiles///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+			}
+	}
+	if( fileWithoutContent )
+	{
+		for (var attrname in mockFileLibrary.fileWithoutContent) 
+			{ 
+				mergedFS[attrname] = mockFileLibrary.fileWithoutContent[attrname];
+				console.log("///////fileWithoutContent///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+			}
 	}
 
+	console.log(JSON.stringify(mergedFS));
 	testCase += 
 	"mock(" +
 		JSON.stringify(mergedFS)
@@ -315,6 +378,17 @@ function constraints(filePath)
 								operator : child.operator,
 								expression: expression
 							}));
+
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[p],
+								value:  "'pathContent/file1'",
+								funcName: funcName,
+								kind: "fileWithoutContent",
+								operator : child.operator,
+								expression: expression
+							}));
 						}
 					}
 				}
@@ -342,6 +416,40 @@ function constraints(filePath)
 					}
 				}
 
+				if( child.type == "CallExpression" &&
+					 child.callee.property &&
+					 child.callee.property.name =="readdirSync")
+				{
+					for( var p =0; p < params.length; p++ )
+					{
+						if( child.arguments[0].name == params[p] )
+						{
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[p],
+								// A fake path to a file
+								value:  "'someDirectory/file1'",
+								funcName: funcName,
+								kind: "directoryWithFiles",
+								operator : child.operator,
+								expression: expression
+							}));
+
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[p],
+								// A fake path to a file
+								value:  "'path/fileExists'",
+								funcName: funcName,
+								kind: "directoryWithEmptyFiles",
+								operator : child.operator,
+								expression: expression
+							}));
+						}
+					}
+				}
 			});
 
 			console.log( functionConstraints[funcName]);
