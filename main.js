@@ -132,21 +132,49 @@ function generateTestCases(filePath)
 		var directoryWithFiles      = _.some(constraints, {kind: 'directoryWithFiles' });
 		var directoryWithEmptyFiles      = _.some(constraints, {kind: 'directoryWithEmptyFiles' });
 		var fileWithoutContent      = _.some(constraints, {kind: 'fileWithoutContent' });
+		console.log(fileWithContent);
+		console.log(pathExists);
+		console.log(directoryWithFiles);
+		console.log(directoryWithEmptyFiles);
+		console.log(fileWithoutContent);
 
 		// Prepare function arguments.
 		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
 			var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
-			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
-			// Bonus...generate constraint variations test cases....
-			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
-			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
-			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
-			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
-			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(!pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+
 
 		}
 
@@ -464,6 +492,7 @@ function constraints(filePath)
 						if( child.arguments[0].name == params[p] )
 						{
 							functionConstraints[funcName].constraints.push( 
+
 							new Constraint(
 							{
 								ident: params[p],
