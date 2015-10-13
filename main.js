@@ -137,7 +137,7 @@ function generateTestCases(filePath)
 		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
 			var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
-			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
+			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			// Bonus...generate constraint variations test cases....
 			content += generateMockFsTestCases(!pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,!fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
@@ -439,6 +439,7 @@ function constraints(filePath)
 					{
 						if( child.arguments[0].name == params[p] )
 						{
+							console.log("child.arguments[0].name---------"+child.arguments[0].name+"     params[p]  "+params[p]);
 							functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
@@ -467,7 +468,7 @@ function constraints(filePath)
 							{
 								ident: params[p],
 								// A fake path to a file
-								value:  "'someDirectory/file1'",
+								value:  "'path/fileExists'",
 								funcName: funcName,
 								kind: "directoryWithFiles",
 								operator : child.operator,
@@ -517,11 +518,28 @@ function constraints(filePath)
 						// A special constraint for the operand of this operator : 'options'
 						if(params[c]==leftArgument)
 						{
+							if(singleArgument)
+							{
+								var sampleValue;
+								// Construct a JSON object if expected
+								if(child.left.argument.property)
+								{
+									sampleValue="{\""+child.left.argument.property.name+"\":true}";
+								}
+								else if(child.right.argument.property)
+								{
+									sampleValue="{\""+child.right.argument.property.name+"\":true}";
+								}
+								else
+								{
+									sampleValue = "'testString'";
+								}
+							}
 							functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
 								ident: params[c],
-								value: "'testString'",
+								value: sampleValue,
 								funcName: funcName,
 								kind: "integer",
 								operator : child.operator,
@@ -534,11 +552,19 @@ function constraints(filePath)
 						// Here we have both of them as 'options' which might not be the case always
 						if(!singleArgument)
 						{
+							if(child.right.argument.property)
+							{
+								sampleValue="{\""+child.right.argument.property.name+"\":true}";
+							}
+							else
+							{
+								sampleValue="'testString'";
+							}
 							functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
 								ident: params[c],
-								value: "'testString'",
+								value: sampleValue,
 								funcName: funcName,
 								kind: "integer",
 								operator : child.operator,
