@@ -37,7 +37,7 @@ function weird(x,y,z, mode)
 }
 
 
-function fileTest(dir, filePath)
+function fileTest(filePath, dir)
 {
 	if (!fs.existsSync(dir)){
 

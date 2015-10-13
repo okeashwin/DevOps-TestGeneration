@@ -143,8 +143,21 @@ function generateTestCases(filePath)
 		// Prepare function arguments.
 		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
-			var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
+			// var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
 			// Considering all the cases ( brute forcing)
+			for( var c = 0; c < constraints.length; c++ )
+			{
+				var constraint = constraints[c];
+				if(debug) console.log("Constraints : "+JSON.stringify(constraint))
+				if( params.hasOwnProperty( constraint.ident ) )
+				{
+					params[constraint.ident] = constraint.value;
+					//if(debug) console.log(params);
+				}
+			}
+
+			var fileArgs = Object.keys(params).map( function(k) {return params[k]; });
+
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
