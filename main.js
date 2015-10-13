@@ -19,7 +19,7 @@ function main()
 
 	constraints(filePath);
 
-	generateTestCases()
+	generateTestCases(filePath);
 
 }
 
@@ -103,10 +103,10 @@ function cartesianProductOf() {
 };
 
 
-function generateTestCases()
+function generateTestCases(filePath)
 {
 
-	var content = "var subject = require('./subject.js')\nvar mock = require('mock-fs');\n";
+	var content = "var subject = require('./"+filePath+"')\nvar mock = require('mock-fs');\n";
 	for ( var funcName in functionConstraints )
 	{
 		var params = {};
@@ -133,32 +133,6 @@ function generateTestCases()
 		var directoryWithEmptyFiles      = _.some(constraints, {kind: 'directoryWithEmptyFiles' });
 		var fileWithoutContent      = _.some(constraints, {kind: 'fileWithoutContent' });
 
-		// plug-in values for parameters
-		for( var c = 0; c < constraints.length; c++ )
-		{
-			var constraint = constraints[c];
-			console.log("Constraints : "+JSON.stringify(constraint))
-			if( params.hasOwnProperty( constraint.ident ) )
-			{
-				params[constraint.ident].push(constraint.value);
-				//console.log(params);
-			}
-		}
-
-		var parametersList = Object.keys(params).map( function(k) {return params[k]; });
-		console.log(parametersList);
-		cartesianOutput = cartesianProductOf.apply(this, parametersList);
-		console.log(cartesianOutput);
-		for(var i=0;i<cartesianOutput.length;i++)
-		{
-			var args = cartesianOutput[i];
-			console.log("Args: "+args)
-			//if(funcName=='inc' || funcName=='weird')
-			{
-				content += "subject.{0}({1});\n".format(funcName, args );
-			}
-		}
-
 		// Prepare function arguments.
 		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
@@ -175,13 +149,35 @@ function generateTestCases()
 			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 
 		}
-		/*else if(funcName!='inc' && funcName!='weird')
-		{
-			// Emit simple test case.
-			content += "subject.{0}({1});\n".format(funcName, args );
-		}
-		*/
 
+		else
+		{
+					// plug-in values for parameters
+			for( var c = 0; c < constraints.length; c++ )
+			{
+				var constraint = constraints[c];
+				console.log("Constraints : "+JSON.stringify(constraint))
+				if( params.hasOwnProperty( constraint.ident ) )
+				{
+					params[constraint.ident].push(constraint.value);
+					//console.log(params);
+				}
+			}
+
+			var parametersList = Object.keys(params).map( function(k) {return params[k]; });
+			console.log(parametersList);
+			cartesianOutput = cartesianProductOf.apply(this, parametersList);
+			console.log(cartesianOutput);
+			for(var i=0;i<cartesianOutput.length;i++)
+			{
+				var args = cartesianOutput[i];
+				console.log("Args: "+args)
+				//if(funcName=='inc' || funcName=='weird')
+				{
+					content += "subject.{0}({1});\n".format(funcName, args );
+				}
+			}
+		}
 	}
 
 
@@ -370,7 +366,7 @@ function constraints(filePath)
 						var trueValue = "'"+testValue+"1234567'";
 						// Add 100 to the area code to make it a false Sample
 						var falseFragment = parseInt(testValue) + 100;
-						if(falseFragment==1000)
+						if(falseFragment > 999)
 						{
 							falseFragment = 100;
 						}
@@ -398,6 +394,8 @@ function constraints(filePath)
 								expression: expression
 							}));
 					}
+
+
 				}
 
 				if( child.type == "CallExpression" && 
@@ -487,6 +485,66 @@ function constraints(filePath)
 								operator : child.operator,
 								expression: expression
 							}));
+						}
+					}
+				}
+
+				if(child.type==='LogicalExpression' && funcName=='format')
+				{
+					var leftArgument = child.left.argument.name;
+					var rightArgument = child.right.argument.object.name;
+					var singleArgument = false;
+					if(leftArgument == rightArgument)
+					{
+						singleArgument = true;
+					} 
+
+					console.log("*************************** Into the single argument loop for options");
+					// Generate a constraint for every param
+					for(var c = 0;c < params.length;c++)
+					{
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[c],
+								value: "''",
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
+						// A special constraint for the operand of this operator : 'options'
+						if(params[c]==leftArgument)
+						{
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[c],
+								value: "'testString'",
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
+						}
+
+						// Generate constraints for the other argument, if both of them are not the same
+						// Here we have both of them as 'options' which might not be the case always
+						if(!singleArgument)
+						{
+							functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params[c],
+								value: "'testString'",
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
 						}
 					}
 				}
