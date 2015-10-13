@@ -78,7 +78,7 @@ var mockFileLibrary =
 	},
 	directoryWithFiles:
 	{
-		pathExists : 
+		'path/fileExists': 
 		{
 			file1: 'text content2'
 		}
@@ -153,7 +153,7 @@ function generateTestCases()
 		{
 			var args = cartesianOutput[i];
 			console.log("Args: "+args)
-			if(funcName=='inc' || funcName=='weird')
+			//if(funcName=='inc' || funcName=='weird')
 			{
 				content += "subject.{0}({1});\n".format(funcName, args );
 			}
@@ -175,11 +175,12 @@ function generateTestCases()
 			content += generateMockFsTestCases(pathExists,fileWithContent,!directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 
 		}
-		else if(funcName!='inc' && funcName!='weird')
+		/*else if(funcName!='inc' && funcName!='weird')
 		{
 			// Emit simple test case.
 			content += "subject.{0}({1});\n".format(funcName, args );
 		}
+		*/
 
 	}
 
@@ -352,6 +353,45 @@ function constraints(filePath)
 							{
 								ident: child.left.callee.object.name,
 								value: falseSample,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+					}
+
+					// For blackListNumber()
+					else if(funcName=="blackListNumber")
+					{
+						var argumentName = child.left.name;
+						var testValue = child.right.value;
+						//== true coverage
+						//console.log("---------------------BLACKLIST------------------------"+params);
+						var trueValue = "'"+testValue+"1234567'";
+						// Add 100 to the area code to make it a false Sample
+						var falseFragment = parseInt(testValue) + 100;
+						if(falseFragment==1000)
+						{
+							falseFragment = 100;
+						}
+						var falseValue = "'"+falseFragment.toString()+"1234567'";
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params,
+								value: trueValue,
+								funcName: funcName,
+								kind: "integer",
+								operator : child.operator,
+								expression: expression
+							}));
+
+						// ==false coverage						
+						functionConstraints[funcName].constraints.push( 
+							new Constraint(
+							{
+								ident: params,
+								value: falseValue,
 								funcName: funcName,
 								kind: "integer",
 								operator : child.operator,
