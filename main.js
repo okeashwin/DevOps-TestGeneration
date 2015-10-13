@@ -6,6 +6,7 @@ faker.locale = "en";
 var mock = require('mock-fs');
 var _ = require('underscore');
 var Random = require('random-js');
+var debug = false;
 
 function main()
 {
@@ -92,6 +93,7 @@ var mockFileLibrary =
 	}
 };
 
+// Reference for the below utility function : http://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 function cartesianProductOf() {
     return _.reduce(arguments, function(a, b) {
         return _.flatten(_.map(a, function(x) {
@@ -110,19 +112,19 @@ function generateTestCases(filePath)
 	for ( var funcName in functionConstraints )
 	{
 		var params = {};
-		console.log("Into the constraint processing loop with funcName:"+funcName)
+		if(debug) console.log("Into the constraint processing loop with funcName:"+funcName)
 
 		// initialize params
 		for (var i =0; i < functionConstraints[funcName].params.length; i++ )
 		{
 			var paramName = functionConstraints[funcName].params[i];
 			//params[paramName] = '\'' + faker.phone.phoneNumber()+'\'';
-			console.log("paramName : "+paramName);
+			if(debug) console.log("paramName : "+paramName);
 			//params[paramName] = '\'\'';
 			params[paramName] = new Array();
 		}
 
-		//console.log( params );
+		//if(debug) console.log( params );
 
 		// update parameter values based on known constraints.
 		var constraints = functionConstraints[funcName].constraints;
@@ -132,16 +134,17 @@ function generateTestCases(filePath)
 		var directoryWithFiles      = _.some(constraints, {kind: 'directoryWithFiles' });
 		var directoryWithEmptyFiles      = _.some(constraints, {kind: 'directoryWithEmptyFiles' });
 		var fileWithoutContent      = _.some(constraints, {kind: 'fileWithoutContent' });
-		console.log(fileWithContent);
-		console.log(pathExists);
-		console.log(directoryWithFiles);
-		console.log(directoryWithEmptyFiles);
-		console.log(fileWithoutContent);
+		if(debug) console.log(fileWithContent);
+		if(debug) console.log(pathExists);
+		if(debug) console.log(directoryWithFiles);
+		if(debug) console.log(directoryWithEmptyFiles);
+		if(debug) console.log(fileWithoutContent);
 
 		// Prepare function arguments.
 		if( pathExists || fileWithContent || directoryWithFiles || directoryWithEmptyFiles || fileWithoutContent)
 		{
 			var fileArgs = ['\'path/fileExists\'', '\'pathContent/file1\''];
+			// Considering all the cases ( brute forcing)
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, directoryWithEmptyFiles, !fileWithoutContent, funcName, fileArgs);
 			content += generateMockFsTestCases(pathExists,fileWithContent,directoryWithFiles, !directoryWithEmptyFiles, fileWithoutContent, funcName, fileArgs);
@@ -184,22 +187,22 @@ function generateTestCases(filePath)
 			for( var c = 0; c < constraints.length; c++ )
 			{
 				var constraint = constraints[c];
-				console.log("Constraints : "+JSON.stringify(constraint))
+				if(debug) console.log("Constraints : "+JSON.stringify(constraint))
 				if( params.hasOwnProperty( constraint.ident ) )
 				{
 					params[constraint.ident].push(constraint.value);
-					//console.log(params);
+					//if(debug) console.log(params);
 				}
 			}
 
 			var parametersList = Object.keys(params).map( function(k) {return params[k]; });
-			console.log(parametersList);
+			if(debug) console.log(parametersList);
 			cartesianOutput = cartesianProductOf.apply(this, parametersList);
-			console.log(cartesianOutput);
+			if(debug) console.log(cartesianOutput);
 			for(var i=0;i<cartesianOutput.length;i++)
 			{
 				var args = cartesianOutput[i];
-				console.log("Args: "+args)
+				if(debug) console.log("Args: "+args)
 				//if(funcName=='inc' || funcName=='weird')
 				{
 					content += "subject.{0}({1});\n".format(funcName, args );
@@ -223,7 +226,7 @@ function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles,
 		for (var attrname in mockFileLibrary.pathExists) 
 			{ 
 				mergedFS[attrname] = mockFileLibrary.pathExists[attrname];
-				console.log("//////////pathExists////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname]));
+				if(debug) console.log("pathExists////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname]));
 			}
 	}
 	if( fileWithContent )
@@ -231,7 +234,7 @@ function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles,
 		for (var attrname in mockFileLibrary.fileWithContent) 
 			{ 
 				mergedFS[attrname] = mockFileLibrary.fileWithContent[attrname];
-				console.log("///////fileWithContent///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+				if(debug) console.log("fileWithContent////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
 			}
 	}
 	if( directoryWithFiles )
@@ -239,7 +242,7 @@ function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles,
 		for (var attrname in mockFileLibrary.directoryWithFiles) 
 			{ 
 				mergedFS[attrname] = mockFileLibrary.directoryWithFiles[attrname];
-				console.log("///////directoryWithFiles///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+				if(debug) console.log("directoryWithFiles////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
 			}
 	}
 	if( directoryWithEmptyFiles )
@@ -247,7 +250,7 @@ function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles,
 		for (var attrname in mockFileLibrary.directoryWithEmptyFiles) 
 			{ 
 				mergedFS[attrname] = mockFileLibrary.directoryWithEmptyFiles[attrname];
-				console.log("///////directoryWithEmptyFiles///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+				if(debug) console.log("directoryWithEmptyFiles///"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
 			}
 	}
 	if( fileWithoutContent )
@@ -255,11 +258,11 @@ function generateMockFsTestCases (pathExists,fileWithContent,directoryWithFiles,
 		for (var attrname in mockFileLibrary.fileWithoutContent) 
 			{ 
 				mergedFS[attrname] = mockFileLibrary.fileWithoutContent[attrname];
-				console.log("///////fileWithoutContent///////////////////////////////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
+				if(debug) console.log("fileWithoutContent////"+attrname+",,,,,,,,,,,,,,,,,,,,,,,,,,,,"+JSON.stringify(mergedFS[attrname])); 
 			}
 	}
 
-	console.log(JSON.stringify(mergedFS));
+	if(debug) console.log(JSON.stringify(mergedFS));
 	testCase += 
 	"mock(" +
 		JSON.stringify(mergedFS)
@@ -281,7 +284,7 @@ function constraints(filePath)
 		if (node.type === 'FunctionDeclaration') 
 		{
 			var funcName = functionName(node);
-			console.log("Line : {0} Function: {1}".format(node.loc.start.line, funcName ));
+			if(debug) console.log("Line : {0} Function: {1}".format(node.loc.start.line, funcName ));
 
 			var params = node.params.map(function(p) {return p.name});
 
@@ -297,7 +300,7 @@ function constraints(filePath)
 						// get expression from original source code:
 						var expression = buf.substring(child.range[0], child.range[1]);
 						var rightHand = buf.substring(child.right.range[0], child.right.range[1])
-						console.log("expression:  "+expression+"   rightHand: "+rightHand);
+						if(debug) console.log("expression:  "+expression+"   rightHand: "+rightHand);
 						if(typeof child.right.value == "string")
 						{
 							if(child.operator == "==" || child.operator == "<")
@@ -351,7 +354,7 @@ function constraints(filePath)
 					else if(child.left.type == "CallExpression" && child.left.callee.property && 
 							child.left.callee.property.name == "indexOf" && params.indexOf(child.left.callee.object.name) > -1)
 					{
-						console.log("Into callExpression BinaryExpression---------------------"+child.left.arguments[0].value);
+						if(debug) console.log("Into callExpression BinaryExpression---------------------"+child.left.arguments[0].value);
 						// ==true coverage
 						var testString = "testString";
 						var leftFragment = testString.slice(0,child.right.value);
@@ -390,7 +393,7 @@ function constraints(filePath)
 						var argumentName = child.left.name;
 						var testValue = child.right.value;
 						//== true coverage
-						//console.log("---------------------BLACKLIST------------------------"+params);
+						//if(debug) console.log("---------------------BLACKLIST------------------------"+params);
 						var trueValue = "'"+testValue+"1234567'";
 						// Add 100 to the area code to make it a false Sample
 						var falseFragment = parseInt(testValue) + 100;
@@ -467,7 +470,7 @@ function constraints(filePath)
 					{
 						if( child.arguments[0].name == params[p] )
 						{
-							console.log("child.arguments[0].name---------"+child.arguments[0].name+"     params[p]  "+params[p]);
+							if(debug) console.log("child.arguments[0].name---------"+child.arguments[0].name+"     params[p]  "+params[p]);
 							functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
@@ -529,7 +532,7 @@ function constraints(filePath)
 						singleArgument = true;
 					} 
 
-					console.log("*************************** Into the single argument loop for options");
+					if(debug) console.log("*************************** Into the single argument loop for options");
 					// Generate a constraint for every param
 					for(var c = 0;c < params.length;c++)
 					{
@@ -599,14 +602,11 @@ function constraints(filePath)
 								operator : child.operator,
 								expression: expression
 							}));
-
 						}
 					}
 				}
 			});
-
 			console.log( functionConstraints[funcName]);
-
 		}
 	});
 }
