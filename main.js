@@ -418,7 +418,7 @@ function constraints(filePath)
 						functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
-								ident: params,
+								ident: params[0],
 								value: trueValue,
 								funcName: funcName,
 								kind: "integer",
@@ -430,7 +430,7 @@ function constraints(filePath)
 						functionConstraints[funcName].constraints.push( 
 							new Constraint(
 							{
-								ident: params,
+								ident: params[0],
 								value: falseValue,
 								funcName: funcName,
 								kind: "integer",
